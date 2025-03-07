@@ -35,3 +35,8 @@ class DeliverySerializer(serializers.ModelSerializer):
         validated_data['role'] = 'delivery'
         user = User.objects.create_user(**validated_data)
         return user
+
+class LoginSerializer(serializers.ModelSerializer):
+    class Meta:
+        models = User
+        fields = ['id','username','password']
