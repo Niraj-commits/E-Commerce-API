@@ -7,20 +7,17 @@ from django.contrib.auth import authenticate
 from rest_framework.response import Response
 
 # Create your views here.
+
 class CustomerRegisterView(generics.ListCreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = CustomerSerializer
-    
-class CustomerRegisterUpdateView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
+    queryset = User.objects.filter(role="customer")
     serializer_class = CustomerSerializer
 
 class SupplierRegisterView(generics.ListCreateAPIView):
-    queryset = User.objects.all()
+    queryset = User.objects.filter(role="supplier")
     serializer_class = SupplierSerializer
 
 class DeliveryRegisterView(generics.ListCreateAPIView):
-    queryset = User.objects.all()
+    queryset = User.objects.filter(role="delivery")
     serializer_class = DeliverySerializer
 
 class LoginView(APIView):
