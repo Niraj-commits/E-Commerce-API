@@ -5,13 +5,13 @@ from django.contrib.auth.admin import UserAdmin
 
 class CustomUser(UserAdmin):
     fieldsets = (
-        (None, {'fields': ('username', 'email', 'password','role','address','phone','vehicle_type','company_name','availability_status')}),
+        (None, {'fields': ('username', 'email', 'password','role','address','phone','company_name','vehicle_type','license_no','availability_status')}),
     )
     
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'password','role','address','phone','vehicle_type','company_name','availability_status'),
+            'fields': ('username', 'email', 'password','role','address','phone','company_name','vehicle_type','license_no','availability_status'),
         }),
     )
 

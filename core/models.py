@@ -1,19 +1,25 @@
 from django.db import models
-
-# Create your models here.
 from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
+    ROLE_CHOICES = [
+        ('admin', 'admin'),
+        ('supplier', 'supplier'),
+        ('customer', 'customer'),
+        ('delivery_person', 'delivery_person'),
+    ]
+    vehicle_choices = [('scooter','scooter'),('bike','bike')]
     
-    role_choices = [('admin','admin'),('supplier','supplier'),('customer','customer'),('delivery','delivery')]
-    
-    address = models.CharField(max_length=25,blank=True,null=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
+    address = models.CharField(max_length=255)
     phone = models.CharField(max_length=15)
-    email = models.EmailField()
-    vehicle_type = models.CharField(max_length=25,null=True,blank=True)
-    company_name = models.CharField(max_length=25,null=True,blank=True)
+    company_name = models.CharField(max_length=25,blank=True,null=True)
+    vehicle_type = models.CharField(max_length=25,choices=vehicle_choices,default='bike',null=True,blank=True)
+    license_no = models.CharField(max_length=16,null=True,blank=True)
     availability_status = models.BooleanField(default=True,null=True,blank=True)
-    role = models.CharField(max_length=25,choices=role_choices,default='customer')
-    created_at = models.DateTimeField( auto_now_add=True)
-    
-    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    def __str__(self):
+        return self.username
+

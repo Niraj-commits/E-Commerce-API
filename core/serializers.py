@@ -1,42 +1,56 @@
-
 from rest_framework import serializers
 from .models import *
 
-class CustomerSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only = True)
+
+class AdminSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ['id','username','password','address','email','phone']
-    
-    def create(self,validated_data):
-        validated_data['role'] = 'customer' #setting role to customer
+        fields = ['id', 'username', 'password', 'email', 'phone', 'address']
 
-        user = User.objects.create_user(**validated_data) #create_user is to handle hashing automatically
+    def create(self, validated_data):
+        validated_data['role'] = 'admin'
+        user = User.objects.create_user(**validated_data)
+        return user
+    
+class CustomerSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'email', 'phone', 'address']
+
+    def create(self, validated_data):
+        validated_data['role'] = 'customer'
+        user = User.objects.create_user(**validated_data)
         return user
 
 class SupplierSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only = True)
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ['id','username','password','address','email','phone','company_name']
-    
-    def create(self,validated_data):
+        fields = ['id', 'username', 'password', 'email', 'phone', 'address', 'company_name']
+
+    def create(self, validated_data):
         validated_data['role'] = 'supplier'
         user = User.objects.create_user(**validated_data)
         return user
 
 class DeliverySerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only = True)
-    
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ['id','username','password','address','email','vehicle_type','availability_status' ]
-    def create(self,validated_data):
+        fields = ['id', 'username', 'password', 'email', 'phone', 'address','license_no','vehicle_type', 'availability_status']
+
+    def create(self, validated_data):
         validated_data['role'] = 'delivery'
         user = User.objects.create_user(**validated_data)
         return user
 
 class LoginSerializer(serializers.ModelSerializer):
     class Meta:
-        models = User
-        fields = ['id','username','password']
+        model = User
+        fields = ['username', 'password']

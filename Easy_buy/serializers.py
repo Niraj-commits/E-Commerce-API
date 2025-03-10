@@ -11,10 +11,18 @@ class ProductSerializer(serializers.ModelSerializer):
     
     category = serializers.StringRelatedField()
     category_id = serializers.PrimaryKeyRelatedField(source = "category",queryset = Category.objects.all())
+    creator = serializers.StringRelatedField(source = "created_by",read_only = True)
     
     class Meta:
         model = Product
-        fields = ['id','name','category_id','category','price','description','quantity','available_status']
+        fields = ['id','name','category_id','category','price','description','quantity','available_status','creator']
+    
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        # self.context['request'].user gives the django user model instance of currently logged in user
+        product = Product.objects.create(**validated_data)
+        return product
+    
 
 class OrderSerializer(serializers.ModelSerializer):
     
