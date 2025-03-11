@@ -11,7 +11,7 @@ class User(AbstractUser):
     vehicle_choices = [('scooter','scooter'),('bike','bike')]
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
-    address = models.CharField(max_length=255)
+    address = models.CharField(max_length=255,default="ktm")
     phone = models.CharField(max_length=15)
     company_name = models.CharField(max_length=25,blank=True,null=True)
     vehicle_type = models.CharField(max_length=25,choices=vehicle_choices,default='bike',null=True,blank=True)

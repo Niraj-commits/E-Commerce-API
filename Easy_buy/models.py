@@ -40,19 +40,18 @@ class Order(models.Model):
     created_at = models.DateField(auto_now_add=True)
     
     def __str__(self):
-        return (f"Ordered By: {self.customer.username}")
+        return (f"Ordered By: {self.customer.username},Order No: {self.id}")
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order,on_delete=models.CASCADE)
+    order = models.ForeignKey(Order,on_delete=models.CASCADE,related_name="items")
     product = models.ForeignKey(Product,on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    total = models.PositiveIntegerField()
 
     def __str__(self):
         return (f"Order: {self.order},product: {self.product.name}")
 
 class Delivery(models.Model):
-    status_choices = [('assigned','assigned'),('in_progress','in_progress'),('delivered','delivered')]
+    status_choices = [('assigned','assigned'),('delivered','delivered'),('cancelled','cancelled')]
     
     order = models.ForeignKey(Order,on_delete=models.CASCADE)
     delivery = models.ForeignKey(User,on_delete=models.CASCADE)
