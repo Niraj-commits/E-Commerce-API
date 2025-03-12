@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render,HttpResponse
 from rest_framework import viewsets
 from .models import *
 from .serializers import *
@@ -33,3 +33,13 @@ class DeliveryViewset(viewsets.ModelViewSet):
     
     queryset = Delivery.objects.all()
     serializer_class = DeliverySerializer
+
+from django.core.mail import send_mail
+def sendmail(request):
+    send_mail(
+        subject = "Order",
+        message = "Your order has been delivered.",
+        from_email = 'karki.ni018@gmail.com',
+        recipient_list = ['abc@gmail.com'],
+    )
+    return HttpResponse({"details":"mail is sent"})

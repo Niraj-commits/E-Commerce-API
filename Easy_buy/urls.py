@@ -11,5 +11,6 @@ router.register('order_item',OrderItemViewset,basename="order_item")
 router.register('delivery',DeliveryViewset,basename="delivery")
 
 urlpatterns = [
+    path('sendmail',sendmail),  
     path('',include(router.urls)),
 ]

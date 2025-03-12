@@ -1,6 +1,8 @@
 from .models import *
 from core.models import User
 from rest_framework import serializers
+from django.core.mail import send_mail
+from django.conf import settings
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -51,14 +53,14 @@ class OrderSerializer(serializers.ModelSerializer):
         
     def get_total_cost(self,order):
         total = 0
-        for item in order.items.all(): #here items is related field set in FK of order items
+        for item in order.items.all(): #here items is related_field, set in FK of order items
             price =item.product.price
             quantity = item.quantity
             total += price *quantity
         return total
     
     def create(self, validated_data):
-        items_list = validated_data.pop('items')
+        items_list = validated_data.pop('items')        
         order = Order.objects.create(**validated_data)
         
         for item in items_list:
@@ -81,10 +83,10 @@ class DeliverySerializer(serializers.ModelSerializer):
         
         order = validated_data.get('order')
         status = validated_data.get('status')
-        delivery = validated_data.get('user')
-        occurence = Delivery.objects.filter(order = order,delivery = delivery).exists()
+        user = validated_data.get('delivery')
+        duplicate_order = Delivery.objects.filter(order = order).exists()
         
-        if occurence:
+        if duplicate_order:
             raise serializers.ValidationError("Record already exist")
         
         if order.status == "completed":
@@ -97,6 +99,13 @@ class DeliverySerializer(serializers.ModelSerializer):
         elif status == "assigned":
             order.status = "pending"
             order.save()
+            
+            send_mail(
+                subject="Delivery Assigned",
+                message= f"Hi {user.username}, A new delivery has been assigned to you.",
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list= [user.email],
+            )
         
         elif status == "cancelled":
             order.status = "cancelled"
@@ -105,6 +114,7 @@ class DeliverySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Sorry!! Order got cancelled")
         delivery_entry = Delivery.objects.create(**validated_data)
         return delivery_entry
+        
     
     def update(self,instance,validated_data):
         order = validated_data.get('order')

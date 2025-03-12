@@ -43,7 +43,7 @@ class DeliverySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'email', 'phone', 'address','license_no','vehicle_type', 'availability_status']
+        fields = ['id', 'username', 'password', 'email', 'phone', 'address','license_no','vehicle_type']
 
     def create(self, validated_data):
         validated_data['role'] = 'delivery'

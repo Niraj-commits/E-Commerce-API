@@ -16,7 +16,6 @@ class User(AbstractUser):
     company_name = models.CharField(max_length=25,blank=True,null=True)
     vehicle_type = models.CharField(max_length=25,choices=vehicle_choices,default='bike',null=True,blank=True)
     license_no = models.CharField(max_length=16,null=True,blank=True)
-    availability_status = models.BooleanField(default=True,null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
