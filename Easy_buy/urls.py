@@ -9,8 +9,8 @@ router.register('product',ProductViewset,basename="product")
 router.register('order',OrderViewset,basename="order")
 router.register('order_item',OrderItemViewset,basename="order_item")
 router.register('delivery',DeliveryViewset,basename="delivery")
+router.register('purchase',PurchaseViewset,basename="purchase")
 
 urlpatterns = [
-    path('sendmail',sendmail),  
     path('',include(router.urls)),
 ]

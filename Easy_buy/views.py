@@ -33,13 +33,17 @@ class DeliveryViewset(viewsets.ModelViewSet):
     
     queryset = Delivery.objects.all()
     serializer_class = DeliverySerializer
+    # permission_classes = [DeliveryAssigned]
+    
+    # def get_queryset(self):
+    #     user = self.request.user
 
-from django.core.mail import send_mail
-def sendmail(request):
-    send_mail(
-        subject = "Order",
-        message = "Your order has been delivered.",
-        from_email = 'karki.ni018@gmail.com',
-        recipient_list = ['abc@gmail.com'],
-    )
-    return HttpResponse({"details":"mail is sent"})
+    #     if user.role == "admin":
+    #         return Delivery.objects.all()
+
+    #     return Delivery.objects.filter(delivery=user)
+
+class PurchaseViewset(viewsets.ModelViewSet):
+    
+    queryset = Purchase.objects.all()
+    serializer_class = PurchaseSerializer

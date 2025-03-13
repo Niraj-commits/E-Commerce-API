@@ -56,3 +56,8 @@ class Delivery(models.Model):
     order = models.ForeignKey(Order,on_delete=models.CASCADE)
     delivery = models.ForeignKey(User,on_delete=models.CASCADE)
     status = models.CharField(max_length=25,choices=status_choices,default="assigned")
+
+class Purchase(models.Model):
+    supplier = models.ForeignKey(User,on_delete=models.CASCADE)
+    product = models.ForeignKey(Product,on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()

@@ -22,14 +22,31 @@ class ViewOnly(BasePermission):
                     return True
                 else:
                     return False
+
+
+class DeliveryAssigned(BasePermission):
+    
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        else:
+            if request.user.role == "admin":
+                return True
+            
+            elif request.user.role == "delivery":
+                if request.method in SAFE_METHODS or request.method in "PATCH":
+                    return True
+                else:
+                    return False
     
     def has_object_permission(self, request, view,obj):
             
         if request.user.role == "admin":
             return True
             
-        if request.user.role == "supplier":
-            return obj.created_by == request.user
+        if request.user.role == "delivery":
+            return obj.delivery == request.user
         
         else:
             return False
+
