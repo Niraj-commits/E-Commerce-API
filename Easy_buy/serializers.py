@@ -23,7 +23,21 @@ class ProductSerializer(serializers.ModelSerializer):
         validated_data['created_by'] = self.context['request'].user
         # self.context['request'].user gives the django user model instance of currently logged in user
         product = Product.objects.create(**validated_data)
+        
+        if product.quantity <5:
+            self.mail_when_low_stock(product)
+        
         return product
+    def mail_when_low_stock(self,product):
+        suppliers = User.objects.filter(role="supplier").values_list("email", flat=True)
+        
+        if suppliers:
+            send_mail(
+                subject="Stock is Running Low",
+                message=f"The {product.name} is running low. Please Restock",
+                from_email= settings.EMAIL_HOST_USER,
+                recipient_list= list(suppliers)
+            )
 
 class OrderItemSerializer(serializers.ModelSerializer):
     
@@ -69,11 +83,15 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
 
-class DeliverySerializer(serializers.ModelSerializer):
+
+# For Creating Delivery
+
+class DeliveryCreateSerializer(serializers.ModelSerializer):
     
     order_id = serializers.PrimaryKeyRelatedField(source = "order",queryset = Order.objects.all())
     deliverer_id = serializers.PrimaryKeyRelatedField(source= "delivery",queryset = User.objects.filter(role="delivery"))
     deliverer = serializers.StringRelatedField(source="delivery")
+    status = serializers.CharField(read_only = True)
     
     class Meta:
         model = Delivery
@@ -82,7 +100,6 @@ class DeliverySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         
         order = validated_data.get('order')
-        status = validated_data.get('status')
         user = validated_data.get('delivery')
         duplicate_order = Delivery.objects.filter(order = order).exists()
         
@@ -91,46 +108,34 @@ class DeliverySerializer(serializers.ModelSerializer):
         
         if order.status == "delivered":
             raise serializers.ValidationError("Order is already completed")
-        
-        if status == "delivered":
-            order.status = "delivered"
             
-            for item in order.items.all():
-                
-                if item.product.quantity < item.quantity:
-                    raise serializers.ValidationError(f"Not enough quantities for {item.product.name}")
-                
-                item.product.quantity -= item.quantity
-                item.product.save()
-            order.save()
+        validated_data['status'] = 'assigned'
+        order.status = "pending"
+        order.save()
             
-            send_mail(
-                subject="Delivery Assigned",
-                message= f"Hi {order.customer.username}, Your order has been delivered please collect it.",
-                from_email=user.email,
-                recipient_list= [order.customer.email],
+        send_mail(
+            subject="Delivery Assigned",
+            message= f"Hi {user.username}, A new delivery has been assigned to you.",
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list= [user.email],
             )
         
-        elif status == "assigned":
-            order.status = "pending"
-            order.save()
-            
-            send_mail(
-                subject="Delivery Assigned",
-                message= f"Hi {user.username}, A new delivery has been assigned to you.",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list= [user.email],
-            )
-        
-        elif status == "cancelled":
-            order.status = "cancelled"
-            order.save()
-            delivery_entry = Delivery.objects.create(**validated_data)
         delivery_entry = Delivery.objects.create(**validated_data)
-        return delivery_entry
-        
+        return delivery_entry 
+
+# For Updating Deleting Delivery Details 
+
+class DeliveryUpdateSerializer(serializers.ModelSerializer):
+    order_id = serializers.PrimaryKeyRelatedField(source = "order",queryset = Order.objects.all())
+    deliverer_id = serializers.PrimaryKeyRelatedField(source= "delivery",queryset = User.objects.filter(role="delivery"))
+    deliverer = serializers.StringRelatedField(source="delivery")
     
+    class Meta:
+        model = Delivery
+        fields = ['id','order_id','deliverer_id','deliverer','status']
+
     def update(self,instance,validated_data):
+        self.fields['status'].read_only = False
         order = validated_data.get('order')
         status = validated_data.get('status')
         user = validated_data.get('delivery')
@@ -152,17 +157,31 @@ class DeliverySerializer(serializers.ModelSerializer):
             order.status = "completed"
             order.save()
             
+            for item in order.items.all():
+                if item.product.quantity < item.quantity:
+                    raise serializers.ValidationError(f"Not enough quantities for {item.product.name}")
+                item.product.quantity -= item.quantity
+                item.product.save()
+            order.save()
+            
             send_mail(
                 subject="Delivery Assigned",
-                message= f"Hi {user.username}, A new delivery has been assigned to you.",
+                message= f"Hi {user.username} delivery has been completed please recieve the package.",
                 from_email=user.email,
                 recipient_list= [order.customer.email],
             )
-        elif status == "assigned":
-            order.status = "pending"
-            order.save()
         
         elif status == "cancelled":
+            instance.status = "cancelled"
+            order.status = "cancelled"
+            order.save()
+            instance.save()
+            send_mail(
+                subject="Delivery Cancelled",
+                message= f"Hi {user.username} delivery has been cancelled please contact seller for further information.",
+                from_email=user.email,
+                recipient_list= [order.customer.email],
+            )
             raise serializers.ValidationError("Order has been cancelled")
         instance.order = order
         instance.status = status
@@ -184,3 +203,13 @@ class PurchaseSerializer(serializers.ModelSerializer):
 
     def get_total_cost(self,purchase):
         return purchase.product.price * purchase.quantity
+    
+    def create(self, validated_data):
+        product = validated_data.get('product')
+        quantity = validated_data.get('quantity')
+        
+        product.quantity += quantity
+        product.save()
+        
+        purchase = Purchase.objects.create(**validated_data)
+        return purchase

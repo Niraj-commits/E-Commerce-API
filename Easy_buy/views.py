@@ -32,7 +32,6 @@ class OrderItemViewset(viewsets.ModelViewSet):
 class DeliveryViewset(viewsets.ModelViewSet):
     
     queryset = Delivery.objects.all()
-    serializer_class = DeliverySerializer
     # permission_classes = [DeliveryAssigned]
     
     # def get_queryset(self):
@@ -42,6 +41,12 @@ class DeliveryViewset(viewsets.ModelViewSet):
     #         return Delivery.objects.all()
 
     #     return Delivery.objects.filter(delivery=user)
+    
+    def get_serializer_class(self):
+        if self.action == "create":
+            return DeliveryCreateSerializer
+        else:
+            return DeliveryUpdateSerializer
 
 class PurchaseViewset(viewsets.ModelViewSet):
     
