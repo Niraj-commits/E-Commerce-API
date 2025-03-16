@@ -61,3 +61,8 @@ class Purchase(models.Model):
     supplier = models.ForeignKey(User,on_delete=models.CASCADE)
     product = models.ForeignKey(Product,on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
+
+class PurchaseAccept(models.Model):
+    
+    purchase_choices = [('pending','pending'),('accept','accept'),('cancel','cancel')]
+    accept = models.CharField(max_length=25,choices=purchase_choices,default="pending")
