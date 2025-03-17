@@ -16,7 +16,6 @@ class Product(models.Model):
     category = models.ForeignKey(Category,on_delete=models.PROTECT)
     available_status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User,on_delete=models.CASCADE)
     price = models.FloatField()
     
     def __str__(self):
@@ -58,7 +57,16 @@ class Delivery(models.Model):
     status = models.CharField(max_length=25,choices=status_choices,default="assigned")
 
 class Purchase(models.Model):
+    
+    order_status = [('pending','pending'),('accepted','accepted'),('cancelled','cancelled')]
+    
     supplier = models.ForeignKey(User,on_delete=models.CASCADE)
+
+    status = models.CharField(max_length=25,choices=order_status,default="pending")
+
+class Purchase_Item(models.Model):
+    
+    purchase_detail = models.ForeignKey(Purchase,on_delete=models.CASCADE)
     product = models.ForeignKey(Product,on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
 
@@ -66,3 +74,4 @@ class PurchaseAccept(models.Model):
     
     purchase_choices = [('pending','pending'),('accept','accept'),('cancel','cancel')]
     accept = models.CharField(max_length=25,choices=purchase_choices,default="pending")
+    purchase_details = models.ForeignKey(Purchase,on_delete=models.CASCADE)
