@@ -29,9 +29,9 @@ class OrderItemViewset(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
     serializer_class = OrderItemSerializer
 
-class DeliveryViewset(viewsets.ModelViewSet):
+class OrderDeliveryViewset(viewsets.ModelViewSet):
     
-    queryset = Delivery.objects.all()
+    queryset = OrderDelivery.objects.all()
     # permission_classes = [DeliveryAssigned]
     
     # def get_queryset(self):
@@ -44,11 +44,35 @@ class DeliveryViewset(viewsets.ModelViewSet):
     
     def get_serializer_class(self):
         if self.action == "create":
-            return DeliveryCreateSerializer
+            return OrderDeliveryCreateSerializer
         else:
-            return DeliveryUpdateSerializer
+            return OrderDeliverySerializer
+
+class PurchaseItemViewset(viewsets.ModelViewSet):
+    
+    queryset = Purchase_Item.objects.all()
+    serializer_class = PurchaseItemSerializer
 
 class PurchaseViewset(viewsets.ModelViewSet):
     
     queryset = Purchase.objects.all()
     serializer_class = PurchaseSerializer
+
+class PurchaseDeliveryViewset(viewsets.ModelViewSet):
+    
+    queryset = PurchaseDelivery.objects.all()
+    # permission_classes = [DeliveryAssigned]
+    
+    # def get_queryset(self):
+    #     user = self.request.user
+
+    #     if user.role == "admin":
+    #         return Delivery.objects.all()
+
+    #     return Delivery.objects.filter(delivery=user)
+    
+    def get_serializer_class(self):
+        if self.action == "create":
+            return PurchaseDeliveryCreateSerializer
+        else:
+            return PurchaseDeliverySerializer

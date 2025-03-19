@@ -49,7 +49,7 @@ class OrderItem(models.Model):
     def __str__(self):
         return (f"Order: {self.order},product: {self.product.name}")
 
-class Delivery(models.Model):
+class OrderDelivery(models.Model):
     status_choices = [('assigned','assigned'),('delivered','delivered'),('cancelled','cancelled')]
     
     order = models.ForeignKey(Order,on_delete=models.CASCADE)
@@ -66,12 +66,13 @@ class Purchase(models.Model):
 
 class Purchase_Item(models.Model):
     
-    purchase_detail = models.ForeignKey(Purchase,on_delete=models.CASCADE)
+    purchase = models.ForeignKey(Purchase,on_delete=models.CASCADE,related_name="add_items")
     product = models.ForeignKey(Product,on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
 
-class PurchaseAccept(models.Model):
+class PurchaseDelivery(models.Model):
+    status_choices = [('assigned','assigned'),('delivered','delivered'),('cancelled','cancelled')]
     
-    purchase_choices = [('pending','pending'),('accept','accept'),('cancel','cancel')]
-    accept = models.CharField(max_length=25,choices=purchase_choices,default="pending")
-    purchase_details = models.ForeignKey(Purchase,on_delete=models.CASCADE)
+    purchase = models.ForeignKey(Purchase,on_delete=models.CASCADE)
+    delivery = models.ForeignKey(User,on_delete=models.CASCADE)
+    status = models.CharField(max_length=25,choices=status_choices,default="assigned")
