@@ -3,6 +3,8 @@ from rest_framework import viewsets
 from .models import *
 from .serializers import *
 from .permission import *
+from rest_framework.viewsets import ViewSet
+from rest_framework.response import Response
 
 # Create your views here.
 class CategoryViewset(viewsets.ModelViewSet):
@@ -74,5 +76,36 @@ class PurchaseDeliveryViewset(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             return PurchaseDeliveryCreateSerializer
-        else:
-            return PurchaseDeliverySerializer
+        # else:
+        #     return PurchaseDeliverySerializer
+
+class Dashboard(ViewSet):
+    
+    def list(self,request):
+        
+        best_customer = None
+        total = 0
+        customers = User.objects.filter(role = "customer")
+        for customer in customers:
+            total_spent = 0
+            
+            for order in customer.order_set.all():
+                for item in order.items.all():
+                    price = item.product.price
+                    quantity = item.quantity
+                    total_spent += price * quantity
+            
+            if total_spent > total:
+                total = total_spent
+                best_customer = customer.username
+        
+        stats = {
+            "total_users": User.objects.count(),
+            "customers": User.objects.filter(role = "customer").count(),
+            "suppliers": User.objects.filter(role = "supplier").count(),
+            "deliverers": User.objects.filter(role = "delivery").count(),
+            "admins":User.objects.filter(role = "admin").count(),
+            "best_customer":best_customer,
+            "spent_by_best_customer":total,
+        }
+        return Response(stats)

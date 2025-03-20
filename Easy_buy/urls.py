@@ -12,6 +12,7 @@ router.register('order_delivery',OrderDeliveryViewset,basename="order_delivery")
 router.register('purchase_item',PurchaseItemViewset,basename="purchase_item")
 router.register('purchase',PurchaseViewset,basename="purchase")
 router.register('purchase_delivery',PurchaseDeliveryViewset,basename="purchase_delivery")
+router.register('dashboard',Dashboard,basename="dashboard")
 
 urlpatterns = [
     path('',include(router.urls)),
