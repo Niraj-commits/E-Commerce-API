@@ -82,22 +82,70 @@ class PurchaseDeliveryViewset(viewsets.ModelViewSet):
 class Dashboard(ViewSet):
     
     def list(self,request):
+        # # For Best Customer
+        # best_customer = None
+        # total = 0  # Highest total spent by a single customer
+        # total_revenue = 0  # Total revenue from all customers
+
+        # customers = User.objects.filter(role="customer")
+        # for customer in customers:
+        #     total_spent = 0  # Total spent by this customer
+            
+        #     for order in customer.order_set.all():
+        #         order_total = 0  # Total for this specific order
+                
+        #         for item in order.items.all():
+        #             price = item.product.price
+        #             quantity = item.quantity
+        #             order_total += price * quantity
+                
+        #         total_spent += order_total
+        #         total_revenue += order_total  # Add to total revenue
+            
+        #     if total_spent > total:
+        #         total = total_spent
+        #         best_customer = customer.username
+
+        # # For Best Supplier
+        # best_supplier = None
+        # total_quantity = 0  # Highest quantity supplied by a single supplier
+        # total_spent_to_suppliers = 0  # Total spent on suppliers
+
+        # suppliers = User.objects.filter(role="supplier")
+        # for supplier in suppliers:
+        #     total_supplied = 0  # Total quantity supplied by this supplier
+        #     supplier_earnings = 0  # Total money this supplier earned
+
+        #     for purchase in supplier.purchase_set.all():
+        #         for item in purchase.add_items.all():
+        #             price = item.product.price  # Supplier price
+        #             quantity = item.quantity
+        #             total_supplied += quantity
+        #             supplier_earnings += price * quantity
+                
+        #     total_spent_to_suppliers += supplier_earnings  # Add to total supplier spending
+
+        #     if total_supplied > total_quantity:
+        #         total_quantity = total_supplied
+        #         best_supplier = supplier.username
+
+        # # Calculate Profit
+        # profit = total_revenue - total_spent_to_suppliers
+        
         
         best_customer = None
-        total = 0
+        total_spent = 0
         customers = User.objects.filter(role = "customer")
+        
         for customer in customers:
-            total_spent = 0
-            
             for order in customer.order_set.all():
-                for item in order.items.all():
-                    price = item.product.price
-                    quantity = item.quantity
-                    total_spent += price * quantity
+                order_total = 0
+                for order_item in order.items.all():
+                    price = order_item.product.price
+                    quantity = order_item.quantity
+                    order_total += price * quantity
             
-            if total_spent > total:
-                total = total_spent
-                best_customer = customer.username
+        
         
         stats = {
             "total_users": User.objects.count(),
@@ -105,7 +153,12 @@ class Dashboard(ViewSet):
             "suppliers": User.objects.filter(role = "supplier").count(),
             "deliverers": User.objects.filter(role = "delivery").count(),
             "admins":User.objects.filter(role = "admin").count(),
-            "best_customer":best_customer,
-            "spent_by_best_customer":total,
+            # "best_customer":best_customer,
+            # "spent_by_best_customer":total_purchased,
+            # "total_revenue":total_revenue,
+            # "best_supplier":best_supplier,
+            # "units_supplied":total_quantity,
+            # "total_spent_to_suppliers":total_spent_to_suppliers,
+            # "profit":profit,
         }
         return Response(stats)

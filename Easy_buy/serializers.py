@@ -98,7 +98,7 @@ class OrderDeliveryCreateSerializer(serializers.ModelSerializer):
         
         order = validated_data.get('order')
         user = validated_data.get('delivery')
-        duplicate_order = Order.objects.filter(order = order).exists()
+        duplicate_order = OrderDelivery.objects.filter(order = order).exists()
         
         if duplicate_order:
             raise serializers.ValidationError("Record already exist")
@@ -133,7 +133,7 @@ class OrderDeliverySerializer(serializers.ModelSerializer):
 
     def update(self,instance,validated_data):
         self.fields['status'].read_only = False
-        order = validated_data.get('order')
+        order = validated_data.get('orderdelivery')
         status = validated_data.get('status')
         user = validated_data.get('delivery')
         occurence = OrderDelivery.objects.filter(order = order,delivery = user,status = status).exists()

@@ -59,9 +59,7 @@ class OrderDelivery(models.Model):
 class Purchase(models.Model):
     
     order_status = [('pending','pending'),('accepted','accepted'),('cancelled','cancelled')]
-    
-    supplier = models.ForeignKey(User,on_delete=models.CASCADE)
-
+    supplier = models.ForeignKey(User,on_delete=models.CASCADE,related_name="purchase_set")
     status = models.CharField(max_length=25,choices=order_status,default="pending")
 
 class Purchase_Item(models.Model):
