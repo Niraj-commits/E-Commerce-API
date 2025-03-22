@@ -132,19 +132,32 @@ class Dashboard(ViewSet):
         # # Calculate Profit
         # profit = total_revenue - total_spent_to_suppliers
         
-        
+        best_spent = 0
         best_customer = None
-        total_spent = 0
         customers = User.objects.filter(role = "customer")
+        suppliers = User.objects.filter(role = "supplier")
         
         for customer in customers:
-            for order in customer.order_set.all():
+            total_spent = 0 
+            for orders in customer.order_set.all():
                 order_total = 0
-                for order_item in order.items.all():
-                    price = order_item.product.price
-                    quantity = order_item.quantity
+                for order_items in orders.items.all():
+                    price = order_items.product.price
+                    quantity = order_items.quantity
                     order_total += price * quantity
+                total_spent += order_total
             
+            if total_spent > best_spent:
+                best_spent = total_spent
+                best_customer = customer.username      
+        
+        for supplier in suppliers:
+            total_supplied = 0
+            for purchase in supplier.purchase_set.all():
+                for purchase_item in purchase.add_items.all():
+                    
+                    price = purchase_item.product.price
+                    quantity = purchase_item.quantity
         
         
         stats = {
@@ -153,7 +166,7 @@ class Dashboard(ViewSet):
             "suppliers": User.objects.filter(role = "supplier").count(),
             "deliverers": User.objects.filter(role = "delivery").count(),
             "admins":User.objects.filter(role = "admin").count(),
-            # "best_customer":best_customer,
+            "best_customer":best_customer,
             # "spent_by_best_customer":total_purchased,
             # "total_revenue":total_revenue,
             # "best_supplier":best_supplier,
