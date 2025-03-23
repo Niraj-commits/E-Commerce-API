@@ -134,18 +134,24 @@ class Dashboard(ViewSet):
         
         best_spent = 0
         best_customer = None
+        total_sold = 0
+        total_ordered = 0
+        best_supplier = None
+        best_supplied = 0
         customers = User.objects.filter(role = "customer")
         suppliers = User.objects.filter(role = "supplier")
         
         for customer in customers:
             total_spent = 0 
             for orders in customer.order_set.all():
-                order_total = 0
-                for order_items in orders.items.all():
-                    price = order_items.product.price
-                    quantity = order_items.quantity
-                    order_total += price * quantity
-                total_spent += order_total
+                if orders.status == "completed":
+                    order_total = 0
+                    for order_items in orders.items.all():
+                        price = order_items.product.price
+                        quantity = order_items.quantity
+                        order_total += price * quantity
+                    total_spent += order_total
+                    total_sold += order_total
             
             if total_spent > best_spent:
                 best_spent = total_spent
@@ -154,11 +160,20 @@ class Dashboard(ViewSet):
         for supplier in suppliers:
             total_supplied = 0
             for purchase in supplier.purchase_set.all():
-                for purchase_item in purchase.add_items.all():
-                    
-                    price = purchase_item.product.price
-                    quantity = purchase_item.quantity
+                if purchase.status == "completed":
+                    for purchase_item in purchase.add_items.all():
+                        
+                        price = purchase_item.product.price
+                        quantity = purchase_item.quantity
+                        supply_total = price * quantity
+                    total_supplied += supply_total
+                    total_ordered += supply_total
+            
+            if total_supplied > best_supplied:
+                best_supplied = total_supplied
+                best_supplier = supplier.username
         
+            profit = total_sold - total_ordered
         
         stats = {
             "total_users": User.objects.count(),
@@ -167,11 +182,13 @@ class Dashboard(ViewSet):
             "deliverers": User.objects.filter(role = "delivery").count(),
             "admins":User.objects.filter(role = "admin").count(),
             "best_customer":best_customer,
-            # "spent_by_best_customer":total_purchased,
-            # "total_revenue":total_revenue,
-            # "best_supplier":best_supplier,
-            # "units_supplied":total_quantity,
-            # "total_spent_to_suppliers":total_spent_to_suppliers,
-            # "profit":profit,
+            "total_spent_by_best_customer":total_spent,
+            "best_supplier":best_supplier,
+            "total_supplied_by_best_supplier":total_supplied,
+            "total_ordered":total_ordered,
+            "total_revenue": total_sold,
+            "profit/loss": profit,
+            "orders_pending":Order.objects.filter(status = "pending").count(),
+            "orders_completed":Order.objects.filter(status = "completed").count(),
         }
         return Response(stats)
