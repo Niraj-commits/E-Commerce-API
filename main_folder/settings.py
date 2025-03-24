@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     "Easy_buy",
     'rest_framework',
     'rest_framework.authtoken',
+    "debug_toolbar",
+    'drf_spectacular',
+    'drf_spectacular_sidecar',
 ]
 
 MIDDLEWARE = [
@@ -53,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = 'main_folder.urls'
@@ -135,7 +139,8 @@ AUTH_USER_MODEL = "core.User"
 REST_FRAMEWORK = {
 	    'DEFAULT_AUTHENTICATION_CLASSES': [
 		'rest_framework.authentication.TokenAuthentication',
-	    ]}
+	    ],
+     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',}
 
 EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
 EMAIL_HOST_USER = 'db9cec66afd998'
@@ -143,3 +148,23 @@ EMAIL_HOST_PASSWORD = '1ba18610a58c35'
 EMAIL_PORT = 2525
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
+
+
+# DRF Debug toolbar
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]
+
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Easy Buy API',
+    'DESCRIPTION': 'Easy Buy API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
+    'SWAGGER_UI_DIST': 'SIDECAR',  # shorthand to use the sidecar instead
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+}

@@ -6,6 +6,8 @@ from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from rest_framework import viewsets
+from drf_spectacular.utils import extend_schema_view,extend_schema,OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 # Create your views here.
 
 class AdminRegisterView(viewsets.ModelViewSet):
@@ -25,6 +27,12 @@ class DeliveryRegisterView(viewsets.ModelViewSet):
     serializer_class = DeliverySerializer
 
 class LoginView(APIView):
+    
+    @extend_schema(
+        request= LoginSerializer,
+        responses = {204:None},
+        methods = ['POST']
+    )
     
     def post(self,request):
         username = request.data.get('username')

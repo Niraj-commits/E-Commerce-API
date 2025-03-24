@@ -21,17 +21,6 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-# class Cart(models.Model):
-#     customer = models.ForeignKey(User,on_delete=models.CASCADE,related_name="customer")
-    
-# class CartItem(models.Model):
-#     cart = models.ForeignKey(Cart,on_delete=models.CASCADE)
-#     product = models.ForeignKey(Product,on_delete=models.CASCADE)
-#     quantity = models.PositiveIntegerField(default=1)
-    
-#     def __str__(self):
-#         return (f"cart: {self.cart},product: {self.product.name}")
-
 class Order(models.Model):  
     status_options = [('pending','pending'),('delivered','delivered'),('cancelled','cancelled')]
     customer = models.ForeignKey(User,on_delete=models.CASCADE,related_name="order_set")

@@ -38,7 +38,6 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     
-    order_id = serializers.PrimaryKeyRelatedField(source = "order",queryset = Order.objects.all())
     product_id = serializers.PrimaryKeyRelatedField(source= "product",queryset = Product.objects.all())
     product_name = serializers.StringRelatedField(source="product")
     product_price = serializers.ReadOnlyField(source ="product.price") # fetching product price
@@ -46,21 +45,23 @@ class OrderItemSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = OrderItem
-        fields = ['id','order_id','product_id','product_name',"product_price",'quantity','total']
+        fields = ['id','product_id','product_name',"product_price",'quantity','total']
     
     def get_total(self,order_item): #order_item is a declared variable
         return order_item.product.price * order_item.quantity #product here is Foreign_key name
     
 class OrderSerializer(serializers.ModelSerializer):
     
-    customer_id = serializers.PrimaryKeyRelatedField(source = "customer",queryset = User.objects.filter(role="customer"))
-    customer = serializers.StringRelatedField()
+    customer = serializers.HiddenField(default = serializers.CurrentUserDefault())
+    customer_name = serializers.StringRelatedField(source = "customer")
     total_cost = serializers.SerializerMethodField()
     items = OrderItemSerializer(many =True)
+    status = serializers.HiddenField(default = "pending")
+    order_status = serializers.StringRelatedField(source = "status")
     
     class Meta:
         model = Order
-        fields = ['id','customer_id','customer','status','created_at','total_cost','items']
+        fields = ['id','customer','customer_name','status','order_status','created_at','total_cost','items']
         
     def get_total_cost(self,order):
         total = 0
@@ -71,7 +72,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return total
     
     def create(self, validated_data):
-        items_list = validated_data.pop('items')        
+        items_list = validated_data.pop('items')    #To create order we need to pop items      
         order = Order.objects.create(**validated_data)
         
         for item in items_list:
@@ -192,9 +193,10 @@ class PurchaseItemSerializer(serializers.ModelSerializer):
     price = serializers.ReadOnlyField(source = "product.price")
     total_cost = serializers.SerializerMethodField()
     
+    
     class Meta:
         model = Purchase_Item
-        fields = ['id','purchase','product_name',"price",'quantity','total_cost']
+        fields = ['id','product_name','product',"price",'quantity','total_cost']
 
     def get_total_cost(self,purchase):
         return purchase.product.price * purchase.quantity
@@ -210,13 +212,15 @@ class PurchaseItemSerializer(serializers.ModelSerializer):
         return purchase
 
 class PurchaseSerializer(serializers.ModelSerializer):
-    items = PurchaseItemSerializer(many = True,source = "add_items")
-    supplier = serializers.PrimaryKeyRelatedField(queryset = User.objects.filter(role = "supplier"))
+    add_items = PurchaseItemSerializer(many = True)
+    supplier_name = serializers.StringRelatedField(source = "supplier")
+    supplier = serializers.HiddenField(default = serializers.CurrentUserDefault())
     total = serializers.SerializerMethodField()
+    status = serializers.HiddenField(default = "pending")
     
     class Meta:
         model = Purchase
-        fields = ['id','supplier','status',"total",'items']
+        fields = ['id','supplier','supplier_name','status',"total",'add_items']
     
     def get_total(self,purchase):
         total = 0
@@ -225,6 +229,16 @@ class PurchaseSerializer(serializers.ModelSerializer):
             quantity = item.quantity
             total += price *quantity
         return total
+    
+    def create(self, validated_data):
+        
+        items_list = validated_data.pop('add_items')
+        
+        purchase = Purchase.objects.create(**validated_data)
+        
+        for item in items_list:
+            Purchase_Item.objects.create(purchase = purchase,**item)
+        return purchase
 
 class PurchaseDeliveryCreateSerializer(serializers.ModelSerializer):
     
@@ -241,9 +255,9 @@ class PurchaseDeliveryCreateSerializer(serializers.ModelSerializer):
         
         purchase = validated_data.get('purchase')
         user = validated_data.get('delivery')
-        duplicate_order = PurchaseDelivery.objects.filter(purchase = purchase,delivery = user).exists()
+        duplicate_purchase = PurchaseDelivery.objects.filter(purchase = purchase,delivery = user).exists()
         
-        if duplicate_order:
+        if duplicate_purchase:
             raise serializers.ValidationError("Record already exist")
         
         if Purchase.status == "delivered":
