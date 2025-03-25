@@ -18,7 +18,7 @@ class ViewOnly(BasePermission):
                     return False
             
             elif request.user.role == "supplier":
-                if request.method in SAFE_METHODS or request.method in ["POST", "PUT", "PATCH", "DELETE"]:
+                if request.method in SAFE_METHODS or request.method in "POST":
                     return True
                 else:
                     return False

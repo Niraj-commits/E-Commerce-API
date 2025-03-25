@@ -5,6 +5,8 @@ from .serializers import *
 from .permission import *
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
+from rest_framework import filters
+from .filter import *
 
 # Create your views here.
 class CategoryViewset(viewsets.ModelViewSet):
@@ -12,7 +14,9 @@ class CategoryViewset(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     # permission_classes = [ViewOnly]
-    
+    filter_backends = [filters.SearchFilter,filter.DjangoFilterBackend]
+    search_fields = ['name']
+    filterset_class = CategoryFilter
 
 
 class ProductViewset(viewsets.ModelViewSet):
@@ -20,6 +24,9 @@ class ProductViewset(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     # permission_classes = [ViewOnly] 
+    filter_backends = [filters.SearchFilter,filter.DjangoFilterBackend]
+    search_fields = []
+    filterset_class = ProductFilter
 
 class OrderViewset(viewsets.ModelViewSet):
     
@@ -34,6 +41,7 @@ class OrderItemViewset(viewsets.ModelViewSet):
 class OrderDeliveryViewset(viewsets.ModelViewSet):
     
     queryset = OrderDelivery.objects.all()
+    serializer_class = OrderDeliverySerializer
     # permission_classes = [DeliveryAssigned]
     
     # def get_queryset(self):
@@ -43,12 +51,6 @@ class OrderDeliveryViewset(viewsets.ModelViewSet):
     #         return Delivery.objects.all()
 
     #     return Delivery.objects.filter(delivery=user)
-    
-    def get_serializer_class(self):
-        if self.action == "create":
-            return OrderDeliveryCreateSerializer
-        else:
-            return OrderDeliverySerializer
 
 class PurchaseItemViewset(viewsets.ModelViewSet):
     
@@ -63,6 +65,7 @@ class PurchaseViewset(viewsets.ModelViewSet):
 class PurchaseDeliveryViewset(viewsets.ModelViewSet):
     
     queryset = PurchaseDelivery.objects.all()
+    serializer_class = PurchaseDeliverySerializer
     # permission_classes = [DeliveryAssigned]
     
     # def get_queryset(self):
@@ -72,12 +75,6 @@ class PurchaseDeliveryViewset(viewsets.ModelViewSet):
     #         return Delivery.objects.all()
 
     #     return Delivery.objects.filter(delivery=user)
-    
-    def get_serializer_class(self):
-        if self.action == "create":
-            return PurchaseDeliveryCreateSerializer
-        # else:
-        #     return PurchaseDeliverySerializer
 
 class Dashboard(ViewSet):
     

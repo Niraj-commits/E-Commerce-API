@@ -25,7 +25,6 @@ class Order(models.Model):
     status_options = [('pending','pending'),('delivered','delivered'),('cancelled','cancelled')]
     customer = models.ForeignKey(User,on_delete=models.CASCADE,related_name="order_set")
     status = models.CharField(max_length=25,choices=status_options,default="pending")
-    created_at = models.DateField(auto_now_add=True)
     
     def __str__(self):
         return (f"Ordered By: {self.customer.username},Order No: {self.id}")
@@ -47,20 +46,20 @@ class OrderDelivery(models.Model):
 
 class Purchase(models.Model):
     
-    order_status = [('pending','pending'),('accepted','accepted'),('cancelled','cancelled')]
+    order_status = [('pending','pending'),('delivered','delivered'),('cancelled','cancelled')]
     supplier = models.ForeignKey(User,on_delete=models.CASCADE,related_name="purchase_set")
     status = models.CharField(max_length=25,choices=order_status,default="pending")
 
 class Purchase_Item(models.Model):
     
-    purchase = models.ForeignKey(Purchase,on_delete=models.CASCADE,related_name="add_items")
+    purchase = models.ForeignKey(Purchase,on_delete=models.CASCADE,related_name="items")
     product = models.ForeignKey(Product,on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
 
 class PurchaseDelivery(models.Model):
-    status_choices = [('pending','pending'),('delivered','delivered'),('cancelled','cancelled')]
+    status_choices = [('assigned','assigned'),('delivered','delivered'),('cancelled','cancelled')]
     
     purchase = models.ForeignKey(Purchase,on_delete=models.CASCADE)
     delivery = models.ForeignKey(User,on_delete=models.CASCADE)
-    status = models.CharField(max_length=25,choices=status_choices,default="pending")
+    status = models.CharField(max_length=25,choices=status_choices,default="assigned")
 
