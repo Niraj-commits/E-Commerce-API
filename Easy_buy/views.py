@@ -7,31 +7,38 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import filters
 from .filter import *
+from .pagination import *
 
 # Create your views here.
 class CategoryViewset(viewsets.ModelViewSet):
     
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    # permission_classes = [ViewOnly]
+    permission_classes = [CategoryPermission]
     filter_backends = [filters.SearchFilter,filter.DjangoFilterBackend]
     search_fields = ['name']
     filterset_class = CategoryFilter
-
+    pagination_class = CustomPagination
+    
 
 class ProductViewset(viewsets.ModelViewSet):
     
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    # permission_classes = [ViewOnly] 
+    permission_classes = [RoleBasedView] 
     filter_backends = [filters.SearchFilter,filter.DjangoFilterBackend]
-    search_fields = []
+    search_fields = ['name','category__name','price'] # To Search from a Foreign key need to specify field inside related model
     filterset_class = ProductFilter
+    pagination_class = CustomPagination
 
 class OrderViewset(viewsets.ModelViewSet):
     
     queryset = Order.objects.prefetch_related('items').all()
     serializer_class = OrderSerializer
+    filter_backends = [filters.SearchFilter,filter.DjangoFilterBackend]
+    search_fields = ['customer__username','status']
+    filterset_class = OrderFilter
+    pagination_class = CustomPagination
 
 class OrderItemViewset(viewsets.ModelViewSet):
     
@@ -42,15 +49,19 @@ class OrderDeliveryViewset(viewsets.ModelViewSet):
     
     queryset = OrderDelivery.objects.all()
     serializer_class = OrderDeliverySerializer
-    # permission_classes = [DeliveryAssigned]
+    permission_classes = [AssignOrderDelivery]
+    filter_backends = [filters.SearchFilter,filter.DjangoFilterBackend]
+    search_fields = ['delivery__username','status','order']
+    filterset_class = OrderDeliveryFilter
+    pagination_class = CustomPagination
     
-    # def get_queryset(self):
-    #     user = self.request.user
+    def get_queryset(self):
+        user = self.request.user
 
-    #     if user.role == "admin":
-    #         return Delivery.objects.all()
+        if user.role == "admin":
+            return OrderDelivery.objects.all()
 
-    #     return Delivery.objects.filter(delivery=user)
+        return OrderDelivery.objects.filter(delivery=user) #only shows deliveries assigned to them
 
 class PurchaseItemViewset(viewsets.ModelViewSet):
     
@@ -61,23 +72,32 @@ class PurchaseViewset(viewsets.ModelViewSet):
     
     queryset = Purchase.objects.all()
     serializer_class = PurchaseSerializer
+    filter_backends = [filters.SearchFilter,filter.DjangoFilterBackend]
+    search_fields = ['supplier__username','status']
+    filterset_class = PurchaseFilter
+    pagination_class = CustomPagination
 
 class PurchaseDeliveryViewset(viewsets.ModelViewSet):
     
     queryset = PurchaseDelivery.objects.all()
     serializer_class = PurchaseDeliverySerializer
-    # permission_classes = [DeliveryAssigned]
+    permission_classes = [AssignPurchaseDelivery]
+    filter_backends = [filters.SearchFilter,filter.DjangoFilterBackend]
+    search_fields = ['delivery__username','status','purchase']
+    filterset_class = PurchaseDeliveryFilter
+    pagination_class = CustomPagination
     
-    # def get_queryset(self):
-    #     user = self.request.user
+    def get_queryset(self):
+        user = self.request.user
 
-    #     if user.role == "admin":
-    #         return Delivery.objects.all()
+        if user.role == "admin":
+            return PurchaseDelivery.objects.all()
 
-    #     return Delivery.objects.filter(delivery=user)
+        return PurchaseDelivery.objects.filter(delivery=user)
 
-class Dashboard(ViewSet):
+class AdminDashboard(ViewSet):
     
+    permission_classes = [AdminDashboardView]
     def list(self,request):
         best_spent = 0
         best_customer = None
@@ -139,5 +159,23 @@ class Dashboard(ViewSet):
             "profit/loss": profit,
             "orders_pending":Order.objects.filter(status = "pending").count(),
             "orders_completed":Order.objects.filter(status = "completed").count(),
+            "orders_cancelled":Order.objects.filter(status = "cancelled").count(),
         }
         return Response(stats)
+
+
+class SupplierDashboard(ViewSet):
+    
+    permission_classes = [SupplierDashboardView]
+    
+    def list(self,request):
+        low_stock_products = Product.objects.filter(quantity__lte=5) #filtering values less than equal to 5 quantity
+        
+        stats = {
+            "Low Stock Product Count":low_stock_products.count(),
+            "Low Stock Products":list(low_stock_products.values('id','name','quantity')),
+            "Deliveries Pending": Purchase.objects.filter(status = "pending").count(),
+            "Deliveries Completed": Purchase.objects.filter(status = "completed").count(),
+            "Deliveries Cancelled":Purchase.objects.filter(status = "cancelled").count()
+        }
+        return Response (stats)

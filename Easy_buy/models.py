@@ -12,9 +12,8 @@ class Category(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=50)
     description = models.TextField()
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(default=1)
     category = models.ForeignKey(Category,on_delete=models.PROTECT)
-    available_status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     price = models.FloatField()
     
@@ -54,7 +53,7 @@ class Purchase_Item(models.Model):
     
     purchase = models.ForeignKey(Purchase,on_delete=models.CASCADE,related_name="items")
     product = models.ForeignKey(Product,on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(default=1)
 
 class PurchaseDelivery(models.Model):
     status_choices = [('assigned','assigned'),('delivered','delivered'),('cancelled','cancelled')]

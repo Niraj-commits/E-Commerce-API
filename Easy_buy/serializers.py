@@ -31,28 +31,37 @@ class ProductSerializer(serializers.ModelSerializer):
     
     category = serializers.StringRelatedField()
     category_id = serializers.PrimaryKeyRelatedField(source = "category",queryset = Category.objects.all())
+    quantity = serializers.IntegerField(min_value =1,max_value = 1000)
+
     
     class Meta:
         model = Product
-        fields = ['id','name','category_id','category','price','description','quantity','available_status']
+        fields = ['id','name','category_id','category','price','description','quantity']
     
     def create(self, validated_data):
+        
+        occurence = Product.objects.filter(name = validated_data.get('name'),category = validated_data.get('category'),quantity = validated_data.get('quantity'),price = validated_data.get('price'),description = validated_data.get('description')).exists()
+        
+        if occurence:
+            raise serializers.ValidationError("Product with that name and category already exist")
+        
         product = Product.objects.create(**validated_data)
-        
-        if product.quantity <5:
-            self.mail_when_low_stock(product)
-        
         return product
-    def mail_when_low_stock(self,product):
-        suppliers = User.objects.filter(role="supplier").values_list("email", flat=True)
+    
+    def update(self,instance,validated_data):
         
-        if suppliers:
-            send_mail(
-                subject="Stock is Running Low",
-                message=f"The {product.name} is running low. Please Restock",
-                from_email= settings.EMAIL_HOST_USER,
-                recipient_list= list(suppliers)
-            )
+        occurence = Product.objects.filter(name = validated_data.get('name'),category = validated_data.get('category'),quantity = validated_data.get('quantity'),price = validated_data.get('price'),description = validated_data.get('description')).exists()
+        
+        if occurence:
+            raise serializers.ValidationError("Product with that name and category already exist")
+        
+        instance.name = validated_data.get('name')
+        instance.category = validated_data.get('category')
+        instance.quantity = validated_data.get('quantity')
+        instance.price = validated_data.get('price')
+        instance.description = validated_data.get('description')
+        instance.save()
+        return instance
 
 class OrderItemSerializer(serializers.ModelSerializer):
     
@@ -60,6 +69,8 @@ class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.StringRelatedField(source="product")
     product_price = serializers.ReadOnlyField(source ="product.price") # fetching product price
     total = serializers.SerializerMethodField()
+    quantity = serializers.IntegerField(min_value =1,max_value = 1000)
+
     
     class Meta:
         model = OrderItem
@@ -168,19 +179,22 @@ class OrderDeliverySerializer(serializers.ModelSerializer):
         elif status == "completed":
             order.status = "delivered"
             order.save()
-            
-            for item in order.items.all():
-                if item.product.quantity < item.quantity:
-                    raise serializers.ValidationError(f"Not enough quantities for {item.product.name}")
-                item.product.quantity -= item.quantity
-                item.product.save()
-                
             send_mail(
                 subject="Order Completed",
                 message= f"hi {order.customer.username} delivery has been completed",
                 from_email=user.email,
                 recipient_list= [order.customer.email],
             )
+            for item in order.items.all():
+                product = item.product
+                if product.quantity < item.quantity:
+                    raise serializers.ValidationError(f"Not enough quantity for {product.name}")
+                product.quantity -= item.quantity
+                product.save()
+
+                
+                if product.quantity < 5 :
+                    self.mail_when_low_stock(product)
         
         delivery_entry = OrderDelivery.objects.create(**validated_data)
         return delivery_entry 
@@ -207,19 +221,23 @@ class OrderDeliverySerializer(serializers.ModelSerializer):
             order.status = "completed"
             order.save()
             
-            for item in order.items.all():
-                if item.product.quantity < item.quantity:
-                    raise serializers.ValidationError(f"Not enough quantities for {item.product.name}")
-                item.product.quantity -= item.quantity
-                item.product.save()
-            order.save()
-            
             send_mail(
                 subject="Order Completed",
                 message= f"hi {order.customer.username} delivery has been completed",
                 from_email=user.email,
                 recipient_list= [order.customer.email],
             )
+            
+            for item in order.items.all():
+                product = item.product
+                if product.quantity < item.quantity:
+                    raise serializers.ValidationError(f"Not enough quantity for {product.name}")
+                product.quantity -= item.quantity
+                product.save()
+                
+                
+                if product.quantity < 5 :
+                    self.mail_when_low_stock(product)
         
         elif status == "cancelled":
             instance.status = "cancelled"
@@ -238,12 +256,25 @@ class OrderDeliverySerializer(serializers.ModelSerializer):
         instance.delivery = user
         instance.save()
         return instance
+
+    def mail_when_low_stock(self,product):
+        suppliers = User.objects.filter(role = "supplier").values_list("email",flat=True)
+        
+        if suppliers:
+            send_mail(
+                subject="Stock are running low ",
+                message=f"Product {product.name} is running low please send deliveries",
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=list(suppliers),
+            )
             
 class PurchaseItemSerializer(serializers.ModelSerializer):
     
     product_name = serializers.StringRelatedField(source="product")
     price = serializers.ReadOnlyField(source = "product.price")
     total_cost = serializers.SerializerMethodField()
+    quantity = serializers.IntegerField(min_value =1,max_value = 1000)
+
     
     
     class Meta:
@@ -278,7 +309,7 @@ class PurchaseSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Purchase
-        fields = ['id','supplier','supplier_name','status','status',"total",'items']
+        fields = ['id','supplier','supplier_name','status',"total",'items']
     
     def get_total(self,purchase):
         total = 0
