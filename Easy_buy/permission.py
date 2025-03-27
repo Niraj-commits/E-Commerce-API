@@ -1,8 +1,7 @@
 
 from rest_framework.permissions import BasePermission,SAFE_METHODS
-from core.models import User
 
-class RoleBasedView(BasePermission):
+class ProductViewPermission(BasePermission):
     
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -23,7 +22,6 @@ class RoleBasedView(BasePermission):
                 else:
                     return False
 
-
 class AssignOrderDelivery(BasePermission):
     
     def has_permission(self, request, view):
@@ -38,7 +36,6 @@ class AssignOrderDelivery(BasePermission):
                     return True
                 else:
                     return False
-
 
 class CategoryPermission(BasePermission):
     
@@ -62,12 +59,11 @@ class AssignPurchaseDelivery(BasePermission):
             if request.user.role == "supplier":
                 return True
             
-            elif request.user.role == "delivery":
+            elif request.user.role == "delivery": #or request.user.role == "admin":
                 if request.method in SAFE_METHODS or request.method in "PATCH":
                     return True
                 else:
                     return False
-
 
 class SupplierDashboardView(BasePermission):
     
@@ -95,3 +91,42 @@ class AdminDashboardView(BasePermission):
             else:
                 return False
 
+class OrderPermission(BasePermission):
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        if request.user.role =="admin":
+            if request.method in SAFE_METHODS:
+                return True
+            else:
+                return False
+        elif request.user.role == "customer":
+            if request.method in SAFE_METHODS or request.method in "POST":
+                return True
+            else:
+                return False
+        
+        else:
+            return False
+
+class PurchasePermission(BasePermission):
+    
+    def has_permission(self, request, view):
+        
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        if request.user.role == "supplier":
+            if request.method in SAFE_METHODS or request.method in "POST":
+                return True
+            
+            else :
+                return False
+        
+        elif request.user.role == "admin":
+            
+            if request.method in SAFE_METHODS or request.method in "PATCH":
+                return True
+            else:
+                return False

@@ -8,23 +8,28 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 from drf_spectacular.utils import extend_schema_view,extend_schema,OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
+from .permission import *
 # Create your views here.
 
 class AdminRegisterView(viewsets.ModelViewSet):
     queryset = User.objects.filter(role="admin")
     serializer_class = AdminSerializer
+    permission_classes = [RegisterUser]
     
 class CustomerRegisterView(viewsets.ModelViewSet):
     queryset = User.objects.filter(role="customer")
     serializer_class = CustomerSerializer
+    permission_classes = [RegisterUser]
 
 class SupplierRegisterView(viewsets.ModelViewSet):
     queryset = User.objects.filter(role="supplier")
     serializer_class = SupplierSerializer
+    permission_classes = [RegisterUser]
 
 class DeliveryRegisterView(viewsets.ModelViewSet):
     queryset = User.objects.filter(role="delivery")
     serializer_class = DeliverySerializer
+    permission_classes = [RegisterUser]
 
 class LoginView(APIView):
     

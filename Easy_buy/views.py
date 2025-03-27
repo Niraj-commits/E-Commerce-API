@@ -25,7 +25,7 @@ class ProductViewset(viewsets.ModelViewSet):
     
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [RoleBasedView] 
+    permission_classes = [ProductViewPermission]
     filter_backends = [filters.SearchFilter,filter.DjangoFilterBackend]
     search_fields = ['name','category__name','price'] # To Search from a Foreign key need to specify field inside related model
     filterset_class = ProductFilter
@@ -39,6 +39,15 @@ class OrderViewset(viewsets.ModelViewSet):
     search_fields = ['customer__username','status']
     filterset_class = OrderFilter
     pagination_class = CustomPagination
+    permission_classes = [OrderPermission]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.role == "admin":
+            return Order.objects.all()
+
+        return Order.objects.filter(customer=user) #shows only their orders 
 
 class OrderItemViewset(viewsets.ModelViewSet):
     
@@ -76,6 +85,18 @@ class PurchaseViewset(viewsets.ModelViewSet):
     search_fields = ['supplier__username','status']
     filterset_class = PurchaseFilter
     pagination_class = CustomPagination
+    permission_classes = [PurchasePermission]
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        if user.role == "admin":
+            return Purchase.objects.all()
+        
+        elif user.role == "supplier":
+            
+            return Purchase.objects.filter(supplier = user)
+            
 
 class PurchaseDeliveryViewset(viewsets.ModelViewSet):
     

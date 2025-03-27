@@ -1,76 +1,60 @@
-1. User (Abstract Model)
 
-id (PK)
-name
-email (Unique)
-password
-role (Enum: Admin, Supplier, Customer, Delivery Personnel)
-created_at
-updated_at
+1. User
+  id - pk 
+  username - Abstract User
+  password - Abstract User
+  email  - Abstract User
+  role - choices
+  phone - char
+  address - char
+  company-name - char, blank = true
+  licence no - char, blank = true
+  vehicle type - choice
+  created_at - time
 
 2. Category
-
-id (PK)
-name
-description
-
+  id - pk
+  name - char
+ 
 3. Product
-
-id (PK)
-supplier_id (FK to Supplier)
-category_id (FK to Category)
-name
-description
-price
-stock_quantity
-created_at
-updated_at
-
+  id - pk
+  name - char
+  quantity - char
+  category - fk
+  description - char
+  price - int
+  created_at - time
+ 
 4. Order
+  id - pk
+  customer - fk
+  status - choice
+ 
+5. Order Item
+  id - pk
+  product - fk
+  order - fk
+  quantity - int
 
-id (PK)
-customer_id (FK to Customer)
-total_amount
-status (Enum: Pending, Shipped, Delivered, Canceled)
-created_at
-updated_at
+6. Order Delivery
+  id - pk
+  delivery - fk
+  status - choice
+  order - fk
 
-5. OrderItem
+7. Purchase
+  id - pk
+  supplier - fk
+  status - choice
+  
+8. Purchase Item
+  id - pk
+  product - fk
+  order - fk
+  quantity - int
 
-
-id (PK)
-order_id (FK to Order)
-product_id (FK to Product)
-quantity
-price_at_purchase
-
-6. Delivery
-
-id (PK)
-order_id (FK to Order)
-delivery_person_id (FK to Delivery Personnel)
-status (Enum: Assigned, In Transit, Delivered)
-estimated_delivery_date
-actual_delivery_date
-
-7. Payment (Optional)
-id (PK)
-order_id (FK to Order)
-payment_method (Enum: PayPal, Stripe, Credit Card)
-status (Enum: Pending, Completed, Failed)
-transaction_id
-created_at
-
-8. Notifications
-id (PK)
-user_id (FK to User)
-message
-is_read
-created_at
-
-9. Analytics (Admin & Supplier)
-id (PK)
-total_revenue
-top_products
-total_orders
-supplier_performance
+9. Purchase Delivery
+  id - pk 
+  order - fk
+  delivery - fk 
+  status - choice

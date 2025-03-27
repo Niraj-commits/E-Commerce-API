@@ -39,7 +39,7 @@ class OrderItem(models.Model):
 class OrderDelivery(models.Model):
     status_choices = [('assigned','assigned'),('delivered','delivered'),('cancelled','cancelled')]
     
-    order = models.ForeignKey(Order,on_delete=models.CASCADE)
+    order = models.ForeignKey(Order,on_delete=models.CASCADE,related_name="orders")
     delivery = models.ForeignKey(User,on_delete=models.CASCADE)
     status = models.CharField(max_length=25,choices=status_choices,default="assigned")
 
@@ -58,7 +58,7 @@ class Purchase_Item(models.Model):
 class PurchaseDelivery(models.Model):
     status_choices = [('assigned','assigned'),('delivered','delivered'),('cancelled','cancelled')]
     
-    purchase = models.ForeignKey(Purchase,on_delete=models.CASCADE)
+    purchase = models.ForeignKey(Purchase,on_delete=models.CASCADE, related_name = "delivery_set")
     delivery = models.ForeignKey(User,on_delete=models.CASCADE)
     status = models.CharField(max_length=25,choices=status_choices,default="assigned")
 

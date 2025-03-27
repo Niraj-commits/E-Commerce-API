@@ -100,6 +100,7 @@ class OrderSerializer(serializers.ModelSerializer):
     customer_name = serializers.StringRelatedField(source = "customer")
     total_cost = serializers.SerializerMethodField()
     items = OrderItemSerializer(many =True)
+    status = serializers.ReadOnlyField(default = "pending")
     
     class Meta:
         model = Order
@@ -135,66 +136,40 @@ class OrderDeliverySerializer(serializers.ModelSerializer):
     order_id = serializers.PrimaryKeyRelatedField(source = "order",queryset = Order.objects.all())
     deliverer_id = serializers.PrimaryKeyRelatedField(source= "delivery",queryset = User.objects.filter(role="delivery"))
     deliverer = serializers.StringRelatedField(source="delivery")
+    order_total = serializers.SerializerMethodField()
     
     class Meta:
         model = OrderDelivery
-        fields = ['id','order_id','deliverer_id','deliverer','status']
+        fields = ['id','order_id','deliverer_id','deliverer','status','order_total']
+        
+    
+    def get_order_total(self,delivery):
+        total = 0
+        for item in delivery.order.items.all():
+            price = item.product.price
+            quantity = item.quantity
+            
+            total+= price * quantity
+        
+        return total
+            
     
     def create(self, validated_data):
         
         order = validated_data.get('order')
         user = validated_data.get('delivery')
-        status = validated_data.get('status')
         duplicate_order = OrderDelivery.objects.filter(order = order).exists()
         
         if duplicate_order:
             raise serializers.ValidationError("Record already exist")
-        
-        if order.status == "delivered":
-            raise serializers.ValidationError("Order is already completed")
-        
-        if order.status == "cancelled":
-            raise serializers.ValidationError("Order has been cancelled")
-        
-        if status == "assigned":   
-            order.status = "pending"
-            order.save()
-            send_mail(
-                subject="Order Delivery Assigned",
-                message= f"hi {user.username} a new delivery has been assigned to you",
-                from_email= order.customer.email,
-                recipient_list=[user.email]
-            )
-        
-        elif status == "cancelled":
-            order.status = "cancelled"
-            order.save()
-            send_mail(
-                subject="Delivery Cancelled",
-                message= f"Order delivery has been cancelled.",
-                from_email=user.email,
-                recipient_list= [order.customer.email],
-                )
-        
-        elif status == "completed":
-            order.status = "delivered"
-            order.save()
-            send_mail(
-                subject="Order Completed",
-                message= f"hi {order.customer.username} delivery has been completed",
-                from_email=user.email,
-                recipient_list= [order.customer.email],
-            )
-            for item in order.items.all():
-                product = item.product
-                if product.quantity < item.quantity:
-                    raise serializers.ValidationError(f"Not enough quantity for {product.name}")
-                product.quantity -= item.quantity
-                product.save()
-
-                
-                if product.quantity < 5 :
-                    self.mail_when_low_stock(product)
+        order.status = "pending"
+        order.save()
+        send_mail(
+            subject="Order Delivery Assigned",
+            message= f"hi {user.username} a new delivery has been assigned to you",
+            from_email= settings.EMAIL_HOST_USER,
+            recipient_list=[user.email]
+        )
         
         delivery_entry = OrderDelivery.objects.create(**validated_data)
         return delivery_entry 
@@ -275,8 +250,6 @@ class PurchaseItemSerializer(serializers.ModelSerializer):
     total_cost = serializers.SerializerMethodField()
     quantity = serializers.IntegerField(min_value =1,max_value = 1000)
 
-    
-    
     class Meta:
         model = Purchase_Item
         fields = ['id','product_name','product',"price",'quantity','total_cost']
@@ -306,6 +279,7 @@ class PurchaseSerializer(serializers.ModelSerializer):
     supplier_name = serializers.StringRelatedField(source = "supplier")
     supplier = serializers.HiddenField(default = serializers.CurrentUserDefault())
     total = serializers.SerializerMethodField()
+    status = serializers.ReadOnlyField(default = "pending")
     
     class Meta:
         model = Purchase
@@ -341,10 +315,21 @@ class PurchaseDeliverySerializer(serializers.ModelSerializer):
     purchase_id = serializers.PrimaryKeyRelatedField(source = "purchase",queryset = Purchase.objects.all())
     deliverer_id = serializers.PrimaryKeyRelatedField(source= "delivery",queryset = User.objects.filter(role="delivery"))
     deliverer = serializers.StringRelatedField(source="delivery")
+    order_total = serializers.SerializerMethodField()
     
     class Meta:
         model = PurchaseDelivery
-        fields = ['id','purchase_id','deliverer_id','deliverer','status']
+        fields = ['id','purchase_id','deliverer_id','deliverer','status','order_total']
+    
+    def get_order_total(self,delivery):
+        total = 0
+        for item in delivery.purchase.items.all():
+            price = item.product.price
+            quantity = item.quantity
+            
+            total += price * quantity
+        
+        return total
     
     def create(self, validated_data):
         
