@@ -33,9 +33,6 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product,on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
 
-    def __str__(self):
-        return (f"Order: {self.order},product: {self.product.name}")
-
 class OrderDelivery(models.Model):
     status_choices = [('assigned','assigned'),('delivered','delivered'),('cancelled','cancelled')]
     
@@ -48,6 +45,9 @@ class Purchase(models.Model):
     order_status = [('pending','pending'),('delivered','delivered'),('cancelled','cancelled')]
     supplier = models.ForeignKey(User,on_delete=models.CASCADE,related_name="purchase_set")
     status = models.CharField(max_length=25,choices=order_status,default="pending")
+    
+    def __str__(self):
+        return (f"Supplied By: {self.supplier.username},Order No: {self.id}")
 
 class Purchase_Item(models.Model):
     

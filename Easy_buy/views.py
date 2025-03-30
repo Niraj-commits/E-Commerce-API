@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework import filters
 from .filter import *
 from .pagination import *
+from rest_framework import status
 
 # Create your views here.
 class CategoryViewset(viewsets.ModelViewSet):
@@ -20,7 +21,16 @@ class CategoryViewset(viewsets.ModelViewSet):
     filterset_class = CategoryFilter
     pagination_class = CustomPagination
     
-
+    def destroy(self,request,pk):
+        queryset = Category.objects.get(pk = pk)
+        occurence = Product.objects.filter(category = queryset).exists()
+        
+        if occurence:
+            raise serializers.ValidationError({"Details":"Cannot Delete Category is in use"},status= status.HTTP_226_IM_USED) 
+        queryset.delete()
+        return Response({"Details":"Category has been deleted"},status=status.HTTP_200_OK)
+        
+        
 class ProductViewset(viewsets.ModelViewSet):
     
     queryset = Product.objects.all()
@@ -30,6 +40,21 @@ class ProductViewset(viewsets.ModelViewSet):
     search_fields = ['name','category__name','price'] # To Search from a Foreign key need to specify field inside related model
     filterset_class = ProductFilter
     pagination_class = CustomPagination
+    
+    
+    def destroy(self, request,pk):
+        queryset = Product.objects.get(pk = pk)
+        ordered_item = OrderItem.objects.filter(product = queryset).exists()
+        purchased_item = Purchase_Item.objects.filter(product = queryset).exists()
+        
+        if ordered_item:
+            raise serializers.ValidationError({"Details":"Product is ordered can't delete"},status = status.HTTP_226_IM_USED)
+        
+        if purchased_item:
+            raise serializers.ValidationError({"Details":"Product is purchased can't delete"},status = status.HTTP_226_IM_USED)
+        
+        queryset.delete()
+        return Response({"Details":"Product Deleted Successfully"},status=status.HTTP_200_OK)
 
 class OrderViewset(viewsets.ModelViewSet):
     
@@ -48,7 +73,21 @@ class OrderViewset(viewsets.ModelViewSet):
             return Order.objects.all()
 
         return Order.objects.filter(customer=user) #shows only their orders 
+    
+    def destroy(self, request,pk):
+        queryset = Order.objects.get(pk = pk)
+        ordered_item = OrderItem.objects.filter(order = queryset).exists()
+        delivery = OrderDelivery.objects.filter(order = queryset).exists()
+        
+        if ordered_item:
+            raise serializers.ValidationError({"Details":"Order has order items remove them first"},status = status.HTTP_400_BAD_REQUEST)
+        if delivery:
+            raise serializers.ValidationError({"Details":"Order has been assigned remove them first"},status = status.HTTP_400_BAD_REQUEST)
 
+        queryset.delete()
+        return Response({"Details":"Order has been deleted"},status= status.HTTP_200_OK)
+        
+        
 class OrderItemViewset(viewsets.ModelViewSet):
     
     queryset = OrderItem.objects.all()
@@ -96,8 +135,22 @@ class PurchaseViewset(viewsets.ModelViewSet):
         elif user.role == "supplier":
             
             return Purchase.objects.filter(supplier = user)
-            
-
+    
+    def destroy(self, request, pk):
+        queryset = Purchase.objects.get(pk = pk)
+        purchased_item = Purchase_Item.objects.filter(purchase = queryset).exists()
+        delivery = PurchaseDelivery.objects.filter(purchase = queryset).exists()
+        
+        if purchased_item:
+            raise serializers.ValidationError({"Details":"Purchase contains items remove them first"},status = status.HTTP_400_BAD_REQUEST)
+        
+        if delivery:
+            raise serializers.ValidationError({"Details":"Purchase has been assigned remove them first"},status = status.HTTP_400_BAD_REQUEST)
+        
+        queryset.delete()
+        
+        return Response({"Details":"Deleted Purchase Successfully"})
+        
 class PurchaseDeliveryViewset(viewsets.ModelViewSet):
     
     queryset = PurchaseDelivery.objects.all()
@@ -147,17 +200,17 @@ class AdminDashboard(ViewSet):
                 best_customer = customer.username      
         
         # For Best Supplier
+        total_supplied = 0
         for supplier in suppliers:
-            total_supplied = 0
             for purchase in supplier.purchase_set.all():
                 if purchase.status == "completed":
-                    for purchase_item in purchase.add_items.all():
+                    for purchase_item in purchase.items.all():
                         
                         price = purchase_item.product.price
                         quantity = purchase_item.quantity
                         supply_total = price * quantity
-                    total_supplied += supply_total
-                    total_ordered += supply_total
+                        total_supplied += quantity
+                        total_ordered += supply_total
             
             if total_supplied > best_supplied:
                 best_supplied = total_supplied

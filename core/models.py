@@ -6,7 +6,7 @@ class User(AbstractUser):
         ('admin', 'admin'),
         ('supplier', 'supplier'),
         ('customer', 'customer'),
-        ('delivery_person', 'delivery_person'),
+        ('delivery', 'delivery'),
     ]
     vehicle_choices = [('scooter','scooter'),('bike','bike')]
     

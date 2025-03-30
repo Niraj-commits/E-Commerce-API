@@ -14,5 +14,10 @@ class CustomUser(UserAdmin):
             'fields': ('username', 'email', 'password','role','address','phone','company_name','vehicle_type','license_no'),
         }),
     )
+    list_display = ['id','username','role']
+    list_editable = ['role']
+    list_filter = ['role']
+    search_fields = ['role','username']
+    list_per_page = 10
 
 admin.site.register(User,CustomUser)
