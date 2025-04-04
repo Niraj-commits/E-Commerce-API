@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-pa(fi=!0hoh)n*=t%9_5v84hg8pt*gyrr*xkxaf8q65^3xv302
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["https://niraj18.pythonanywhere.com"]
 
 
 # Application definition
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_spectacular',
     'drf_spectacular_sidecar',
+    'fcm_django',
 ]
 
 MIDDLEWARE = [
@@ -169,3 +170,5 @@ SPECTACULAR_SETTINGS = {
     'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
     'REDOC_DIST': 'SIDECAR',
 }
+
+FCM_API_KEY = '829638749827'
